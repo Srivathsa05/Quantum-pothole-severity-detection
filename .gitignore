@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# ML Artifacts (Large files)
+# Note: GitHub has a 100MB limit. If your .pth or .joblib is huge, 
+# keep them local or use Git LFS.
+ml/artifacts/*.pth
+ml/artifacts/*.joblib
+
+# Data & Notebooks
+test_images/
+exp/
+.ipynb_checkpoints/
