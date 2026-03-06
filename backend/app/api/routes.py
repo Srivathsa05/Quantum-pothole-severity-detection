@@ -2,7 +2,7 @@ import os
 import uuid
 from fastapi import APIRouter, UploadFile, File, HTTPException
 
-from backend.app.api.schemas import PredictionResponse
+from app.api.schemas import PredictionResponse
 from ml.inference.predictor import predict_image
 
 router = APIRouter()

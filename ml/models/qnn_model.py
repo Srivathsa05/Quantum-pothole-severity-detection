@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import pennylane as qml
+import os
 from ml.config import DEVICE, N_QUBITS, N_CLASSES
 
 def load_qnn_model():
@@ -30,8 +31,13 @@ def load_qnn_model():
 
     model = HybridQNN().to(DEVICE)
 
+    # Get absolute path to artifacts
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(current_dir))
+    model_path = os.path.join(project_root, "ml", "artifacts", "qnn_torchlayer.pth")
+
     ckpt = torch.load(
-        "ml/artifacts/qnn_torchlayer.pth",
+        model_path,
         map_location=DEVICE
     )
     model.load_state_dict(ckpt["state_dict"])

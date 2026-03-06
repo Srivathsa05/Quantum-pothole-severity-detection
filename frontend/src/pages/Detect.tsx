@@ -30,10 +30,33 @@ export default function Detect() {
   };
 
   const handleAnalyze = async () => {
+    if (!file) return;
     setIsAnalyzing(true);
-    // Simulate processing time
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    navigate("/results");
+
+    try {
+      const form = new FormData();
+      form.append("file", file, file.name);
+
+      const res = await fetch("http://localhost:8000/predict", {
+        method: "POST",
+        body: form,
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText || "Prediction failed");
+      }
+
+      const data = await res.json();
+
+      // Navigate to results and pass prediction + preview via state
+      navigate("/results", { state: { prediction: data, preview } });
+    } catch (err) {
+      console.error("Analyze error:", err);
+      navigate("/results", { state: { error: String(err) } });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   return (

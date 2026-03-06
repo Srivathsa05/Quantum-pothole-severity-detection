@@ -1,11 +1,15 @@
 import joblib
 import numpy as np
-
-ARTIFACT_DIR = "ml/artifacts"
+import os
 
 def load_preprocessors():
-    pca = joblib.load(f"{ARTIFACT_DIR}/pca.joblib")
-    scaler = joblib.load(f"{ARTIFACT_DIR}/scaler.joblib")
+    # Get absolute path to artifacts
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(current_dir))
+    artifact_dir = os.path.join(project_root, "ml", "artifacts")
+    
+    pca = joblib.load(f"{artifact_dir}/pca.joblib")
+    scaler = joblib.load(f"{artifact_dir}/scaler.joblib")
     return pca, scaler
 
 def preprocess_embedding(embedding, pca, scaler):

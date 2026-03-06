@@ -11,12 +11,12 @@ import {
   ArrowLeft,
   RotateCcw,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
-// Simulated result data
-const resultData = {
+// Default fallback data
+const defaultResultData = {
   severity: "medium" as "low" | "medium" | "high",
   confidence: 87.3,
   details: {
@@ -66,6 +66,34 @@ const severityConfig = {
 };
 
 export default function Results() {
+  const location = useLocation();
+  const state = (location.state || {}) as any;
+
+  const prediction = state.prediction;
+
+  // Map backend class names to severity levels
+  const classToSeverity: Record<string, "low" | "medium" | "high"> = {
+    no_pothole: "low",
+    minor: "medium",
+    severe: "high",
+  };
+
+  const resultData = prediction
+    ? {
+        severity: classToSeverity[prediction.class_name] ?? "medium",
+        confidence: Math.round((prediction.confidence ?? 0) * 100 * 10) / 10,
+        details: {
+          potholeCount: prediction.class_name === "no_pothole" ? 0 : 1,
+          avgDepth: "-",
+          surfaceArea: "-",
+          location: state.preview ? "Uploaded image" : "Unknown",
+        },
+        recommendations: prediction.class_name === "severe"
+          ? ["Immediate repair recommended", "Close the affected lane"]
+          : ["Monitor the area", "Schedule routine maintenance"],
+      }
+    : defaultResultData;
+
   const config = severityConfig[resultData.severity];
   const SeverityIcon = config.icon;
 

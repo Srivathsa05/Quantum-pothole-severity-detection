@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from backend.app.api.routes import router as api_router
 
 app = FastAPI(
@@ -8,3 +9,12 @@ app = FastAPI(
 )
 
 app.include_router(api_router)
+
+# Allow requests from the frontend (Vite default port)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
