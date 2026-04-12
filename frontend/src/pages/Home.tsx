@@ -1,276 +1,206 @@
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Atom, Zap, Shield, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Area, AreaChart, ResponsiveContainer } from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { QuantumOrbit } from "@/components/QuantumOrbit";
-import heroImage from "@/assets/hero-quantum.jpg";
-import pothole1 from "@/assets/potholes/pothole1.jpg";
-import pothole2 from "@/assets/potholes/pothole2.jpg";
-import pothole3 from "@/assets/potholes/pothole3.jpg";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 
-
-const features = [
-  {
-    icon: Atom,
-    title: "Quantum-Enhanced",
-    description: "Leveraging quantum feature mapping for superior pattern recognition",
-  },
-  {
-    icon: Zap,
-    title: "Real-Time Analysis",
-    description: "Instant severity classification with millisecond response times",
-  },
-  {
-    icon: Shield,
-    title: "High Accuracy",
-    description: "Research-grade precision for reliable infrastructure assessment",
-  },
-  {
-    icon: BarChart3,
-    title: "Smart Insights",
-    description: "Actionable recommendations for maintenance prioritization",
-  },
+const activity = [
+  { day: "Mon", value: 320 },
+  { day: "Tue", value: 410 },
+  { day: "Wed", value: 395 },
+  { day: "Thu", value: 462 },
+  { day: "Fri", value: 515 },
+  { day: "Sat", value: 488 },
+  { day: "Sun", value: 534 },
 ];
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
+const alertItems = [
+  { location: "MG Road", severity: "CRITICAL", details: "3 potholes", ago: "2 min ago" },
+  { location: "Koramangala", severity: "HIGH", details: "2 potholes", ago: "6 min ago" },
+  { location: "Whitefield", severity: "MEDIUM", details: "5 potholes", ago: "9 min ago" },
+  { location: "Indiranagar", severity: "HIGH", details: "1 pothole", ago: "12 min ago" },
+  { location: "HSR Layout", severity: "CRITICAL", details: "4 potholes", ago: "16 min ago" },
+];
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
-};
+const statTargets = [
+  { label: "Detected", value: 3847 },
+  { label: "Accuracy", value: 94.2, suffix: "%" },
+  { label: "Cameras", value: 12 },
+  { label: "Scanned", value: 142, suffix: "km" },
+];
+
+function severityColor(severity: string) {
+  if (severity === "CRITICAL") return "#ef4444";
+  if (severity === "HIGH") return "#f59e0b";
+  return "#22c55e";
+}
 
 export default function Home() {
+  const [counts, setCounts] = useState<number[]>([0, 0, 0, 0]);
+  const [progressValues, setProgressValues] = useState({ critical: 0, high: 0, low: 0 });
+
+  useEffect(() => {
+    const timers = statTargets.map((target, index) => {
+      const step = Math.max(target.value / 40, 1);
+      return window.setInterval(() => {
+        setCounts((previous) => {
+          const next = [...previous];
+          next[index] = Math.min(next[index] + step, target.value);
+          return next;
+        });
+      }, 30);
+    });
+
+    const progressTimer = window.setTimeout(() => {
+      setProgressValues({ critical: 31, high: 44, low: 25 });
+    }, 200);
+
+    return () => {
+      timers.forEach((timer) => window.clearInterval(timer));
+      window.clearTimeout(progressTimer);
+    };
+  }, []);
+
+  const tickerSequence = useMemo(() => [...alertItems, ...alertItems], []);
+
   return (
-    <div className="relative">
-      {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center overflow-hidden">
-        <QuantumOrbit />
-        
-        {/* Background Image with Overlay */}
-        <div className="absolute inset-0 z-0">
-          <img
-            src={heroImage}
-            alt="Quantum visualization"
-            className="w-full h-full object-cover opacity-10 dark:opacity-20"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background" />
-        </div>
+    <div className="section-container py-4">
+      <section className="roadpulse-card relative h-[240px] overflow-hidden">
+        <div className="grid-overlay absolute inset-0" />
+        <div className="absolute -left-16 -top-20 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(0,120,200,0.1),transparent_70%)]" />
+        <div className="scanline" />
 
-        <div className="section-container relative z-10">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="max-w-4xl mx-auto text-center"
-          >
-            <motion.div
-              variants={itemVariants}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6"
-            >
-              <Atom className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium text-primary">
-                Smart City Research Project
-              </span>
-            </motion.div>
-
-            <motion.h1
-              variants={itemVariants}
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6"
-            >
-              <span className="text-foreground">Quantum </span>
-              <span className="quantum-text">Pothole</span>
-              <br />
-              <span className="text-foreground">Severity Detection</span>
-            </motion.h1>
-
-            <motion.p
-              variants={itemVariants}
-              className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-8"
-            >
-              A cutting-edge system that combines quantum-inspired algorithms with
-              deep learning to accurately detect and classify road surface damage
-              for smarter infrastructure maintenance.
-            </motion.p>
-
-            <motion.div
-              variants={itemVariants}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4"
-            >
-              <Link to="/detect">
-                <Button variant="quantum" size="xl" className="group">
-                  Start Detection
-                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-                </Button>
-              </Link>
-              <Link to="/model">
-                <Button variant="glass" size="lg">
-                  Learn About the Model
-                </Button>
-              </Link>
-            </motion.div>
-
-            {/* Stats */}
-            <motion.div
-              variants={itemVariants}
-              className="grid grid-cols-3 gap-8 mt-16 pt-16 border-t border-border/50"
-            >
-              {[
-                { value: "99.2%", label: "Detection Accuracy" },
-                { value: "<50ms", label: "Processing Time" },
-                { value: "3", label: "Severity Levels" },
-              ].map((stat) => (
-                <div key={stat.label} className="text-center">
-                  <p className="text-2xl sm:text-3xl font-bold quantum-text">
-                    {stat.value}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {stat.label}
-                  </p>
-                </div>
-              ))}
-            </motion.div>
-          </motion.div>
-        </div>
-
-        {/* Scroll indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-        >
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="w-6 h-10 rounded-full border-2 border-muted-foreground/30 flex items-start justify-center p-2"
-          >
-            <motion.div className="w-1 h-2 rounded-full bg-muted-foreground/50" />
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-24 bg-secondary/30">
-        <div className="section-container">
+        <div className="relative z-20 grid h-full gap-6 p-6 md:grid-cols-[1.4fr_1fr]">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-col justify-center"
           >
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-              Why <span className="quantum-text">Quantum-Enhanced</span> Detection?
-            </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Our system leverages quantum computing principles to achieve
-              unprecedented accuracy in road surface analysis.
+            <div className="mb-4 flex items-center gap-3 text-[10px] uppercase tracking-[0.25em] text-cyan-200/80">
+              <span className="h-px w-6 bg-[#00d4ff]" />
+              AI-POWERED ROAD INTELLIGENCE
+              <span className="h-px w-6 bg-[#00d4ff]" />
+            </div>
+            <h1 className="text-3xl font-semibold leading-tight text-[#e2e8f0] md:text-4xl">
+              Detect. Map.
+              <br />
+              <span className="text-[#00d4ff]">Fix Roads Smarter.</span>
+            </h1>
+            <p className="mt-3 max-w-xl text-sm text-slate-300">
+              Real-time pothole detection using YOLOv8. Upload footage, stream live cameras, or explore Bengaluru&apos;s road health map.
             </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link to="/detect">
+                <Button className="bg-[#00d4ff] text-[#06111d] hover:bg-[#49e4ff]">Start Detection</Button>
+              </Link>
+              <Link to="/heatmap">
+                <Button variant="outline" className="border-[#1a3e57] bg-transparent text-[#d6e8f7] hover:bg-[#0e1a2b]">
+                  View Heatmap
+                </Button>
+              </Link>
+            </div>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -5, scale: 1.02 }}
-                className="glass-card rounded-2xl p-6 hover:shadow-lg transition-all duration-300"
-              >
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                  <feature.icon className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {feature.description}
-                </p>
-              </motion.div>
+          <div className="grid grid-cols-2 gap-3">
+            {statTargets.map((stat, index) => {
+              const display = stat.suffix === "%"
+                ? `${counts[index].toFixed(1)}${stat.suffix}`
+                : `${Math.round(counts[index])}${stat.suffix ?? ""}`;
+
+              return (
+                <Card key={stat.label} className="shimmer-card border-[#0f1e30] bg-[#08101f]">
+                  <CardContent className="p-4">
+                    <p className="text-2xl font-semibold text-[#e2e8f0]">{display}</p>
+                    <p className="section-label mt-1">{stat.label}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section
+        className="mt-3 flex h-7 items-center overflow-hidden border-y border-[#0f1e30] bg-[#040810]"
+      >
+        <div className="h-full bg-[#00d4ff] px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#04111d] leading-7">
+          Alerts
+        </div>
+        <div className="overflow-hidden pl-3">
+          <div className="ticker-track flex items-center gap-10 text-xs text-slate-300">
+            {tickerSequence.map((item, index) => (
+              <div key={`${item.location}-${index}`} className="whitespace-nowrap">
+                {item.location} · <span style={{ color: severityColor(item.severity) }}>{item.severity}</span> · {item.details} · {item.ago}
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Sample Road Conditions Section */}
-<section className="py-24">
-  <div className="section-container">
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="text-center mb-16"
-    >
-      <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-        Sample <span className="quantum-text">Road Conditions</span>
-      </h2>
-      <p className="text-muted-foreground max-w-2xl mx-auto">
-        Real-world road surface images analyzed by the quantum-enhanced
-        pothole severity detection system.
-      </p>
-    </motion.div>
-
-    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {[pothole1, pothole2, pothole3].map((img, index) => (
-        <motion.div
-          key={index}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: index * 0.1 }}
-          whileHover={{ y: -4, scale: 1.01 }}
-          className="glass-card rounded-2xl overflow-hidden"
-        >
-          <img
-            src={img}
-            alt={`Pothole sample ${index + 1}`}
-            className="w-full h-56 object-cover"
-          />
-        </motion.div>
-      ))}
-    </div>
-  </div>
-</section>
-
-
-      {/* CTA Section */}
-      <section className="py-24">
-        <div className="section-container">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="relative overflow-hidden rounded-3xl quantum-gradient p-12 sm:p-16 text-center"
-          >
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIxLjUiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-50" />
-            
-            <div className="relative z-10">
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-                Ready to Analyze Road Conditions?
-              </h2>
-              <p className="text-white/80 max-w-xl mx-auto mb-8">
-                Upload an image or video of a road surface and get instant severity
-                classification powered by quantum-enhanced algorithms.
-              </p>
-              <Link to="/detect">
-                <Button
-                  size="xl"
-                  className="bg-white text-primary hover:bg-white/90 hover:shadow-xl"
-                >
-                  Start Detection Now
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
+      <section className="mt-4 grid gap-4 lg:grid-cols-2">
+        <Card className="border-[#0f1e30] bg-[#08101f]">
+          <CardHeader>
+            <p className="section-label">Detection Activity</p>
+            <CardTitle className="text-base text-slate-100">7-Day Trend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-44">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={activity}>
+                  <defs>
+                    <linearGradient id="activityFill" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor="#00d4ff" stopOpacity={0.25} />
+                      <stop offset="100%" stopColor="#00d4ff" stopOpacity={0.05} />
+                    </linearGradient>
+                  </defs>
+                  <Area type="monotone" dataKey="value" stroke="#00d4ff" strokeWidth={2} fill="url(#activityFill)" />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
-          </motion.div>
-        </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-[#0f1e30] bg-[#08101f]">
+          <CardHeader>
+            <p className="section-label">Severity Mix</p>
+            <CardTitle className="text-base text-slate-100">Current Breakdown</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div>
+              <div className="mb-2 flex items-center justify-between text-xs">
+                <span className="text-red-400">Critical</span>
+                <span>31%</span>
+              </div>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <Progress value={progressValues.critical} className="h-2 bg-[#102133] [&>div]:bg-red-500" />
+              </motion.div>
+            </div>
+            <Separator className="bg-[#12243a]" />
+            <div>
+              <div className="mb-2 flex items-center justify-between text-xs">
+                <span className="text-amber-400">High</span>
+                <span>44%</span>
+              </div>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <Progress value={progressValues.high} className="h-2 bg-[#102133] [&>div]:bg-amber-500" />
+              </motion.div>
+            </div>
+            <Separator className="bg-[#12243a]" />
+            <div>
+              <div className="mb-2 flex items-center justify-between text-xs">
+                <span className="text-emerald-400">Low</span>
+                <span>25%</span>
+              </div>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <Progress value={progressValues.low} className="h-2 bg-[#102133] [&>div]:bg-emerald-500" />
+              </motion.div>
+            </div>
+          </CardContent>
+        </Card>
       </section>
     </div>
   );

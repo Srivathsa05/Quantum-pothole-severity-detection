@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Pothole Detector</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f0f0; }
+        video { width: 100%; max-width: 400px; border: 1px solid #ccc; }
+        #status { margin-top: 10px; padding: 10px; background: #fff; border-radius: 5px; }
+        #qr { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Mobile Pothole Detector</h1>
+    <video id="video" autoplay playsinline muted></video>
+    <div id="status">Status: Waiting...</div>
+    <div id="qr"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+    <script>
+        const video = document.getElementById('video');
+        const status = document.getElementById('status');
+        const qrDiv = document.getElementById('qr');
+
+        let ws;
+        let watchId;
+
+        // Generate QR code for WS URL
+        const qr = new QRCode(qrDiv, {
+            text: 'ws://' + window.location.hostname + ':8000/ws/frame',
+            width: 128,
+            height: 128,
+        });
+
+        async function startStream() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+
+                // Get GPS
+                if (navigator.geolocation) {
+                    watchId = navigator.geolocation.watchPosition(
+                        (position) => {
+                            const lat = position.coords.latitude;
+                            const lon = position.coords.longitude;
+                            console.log('GPS:', lat, lon);
+                        },
+                        (error) => console.error('GPS error:', error)
+                    );
+                }
+
+                // Connect to WS
+                ws = new WebSocket('ws://' + window.location.hostname + ':8000/ws/frame');
+                ws.onopen = () => {
+                    status.textContent = 'Status: Connected';
+                    captureAndSend();
+                };
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    status.textContent = `Status: ${data.severity} (${(data.confidence * 100).toFixed(1)}%)`;
+                };
+                ws.onerror = () => status.textContent = 'Status: Error';
+                ws.onclose = () => status.textContent = 'Status: Disconnected';
+
+            } catch (error) {
+                status.textContent = 'Status: Camera/GPS permission denied';
+                console.error(error);
+            }
+        }
+
+        function captureAndSend() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 224;
+            canvas.height = 224;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, 224, 224);
+
+            canvas.toBlob((blob) => {
+                blob.arrayBuffer().then((buffer) => {
+                    // Send JPEG bytes
+                    ws.send(new Uint8Array(buffer));
+
+                    // Send JSON with GPS
+                    let lat = 0, lon = 0;
+                    if (navigator.geolocation && watchId) {
+                        // Note: In real implementation, get current position
+                        lat = 12.9716; // Bangalore approx
+                        lon = 77.5946;
+                    }
+                    ws.send(JSON.stringify({
+                        frame: canvas.toDataURL('image/jpeg').split(',')[1],
+                        lat: lat,
+                        lon: lon,
+                        ts: new Date().toISOString()
+                    }));
+                });
+            }, 'image/jpeg');
+
+            setTimeout(captureAndSend, 300); // 300ms
+        }
+
+        startStream();
+    </script>
+</body>
+</html>

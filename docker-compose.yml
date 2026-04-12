@@ -1,0 +1,43 @@
+version: "3.9"
+services:
+  backend:
+    build: ./backend
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+  capture:
+    build: ./capture_worker
+    env_file:
+      - ./capture_worker/.env
+    environment:
+      - ENABLE_DASHCAM=${ENABLE_DASHCAM:-false}
+    restart: unless-stopped
+    depends_on:
+      - backend
+  mobile_client:
+    image: nginx:alpine
+    volumes:
+      - ./mobile_client:/usr/share/nginx/html:ro
+    ports:
+      - "8080:80"
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    environment:
+      - VITE_BACKEND_URL=http://backend:8000
+    depends_on:
+      - backend
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pothole
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+volumes:
+  pg_data:

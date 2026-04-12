@@ -1,128 +1,71 @@
-import { Link, useLocation } from "react-router-dom";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Sun, Moon, Atom, Menu, X } from "lucide-react";
-import { useState } from "react";
-import { useTheme } from "@/contexts/ThemeContext";
-import { Button } from "@/components/ui/button";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { MapPinned } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 const navLinks = [
   { path: "/", label: "Home" },
   { path: "/detect", label: "Detection" },
+  { path: "/live", label: "Live Detection" },
+  { path: "/heatmap", label: "Heatmap" },
   { path: "/results", label: "Results" },
-  { path: "/model", label: "Model" },
-  { path: "/contributions", label: "Contributions" },
+  { path: "/model", label: "About Us" },
 ];
 
-
 export function Navbar() {
-  const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   const location = useLocation();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const activePath = useMemo(() => {
+    const matched = navLinks.find((item) => item.path === location.pathname);
+    return matched?.path ?? "/";
+  }, [location.pathname]);
 
   return (
     <motion.nav
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="fixed top-0 left-0 right-0 z-50 glass-card border-b"
+      initial={{ opacity: 0, y: -12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="sticky top-0 z-50 h-[52px] border-b"
+      style={{ backgroundColor: "#08101f", borderColor: "#112240" }}
     >
-      <div className="section-container">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <motion.div
-              whileHover={{ rotate: 180 }}
-              transition={{ duration: 0.5 }}
-              className="p-2 rounded-lg bg-primary/10"
-            >
-              <Atom className="w-5 h-5 text-primary" />
-            </motion.div>
-            <span className="font-semibold text-foreground hidden sm:block">
-              Quantum<span className="text-primary">Pothole</span>
+      <div className="section-container h-full">
+        <div className="grid h-full grid-cols-[1fr_auto_1fr] items-center gap-4">
+          <Link to="/" className="flex items-center gap-2 text-sm font-semibold tracking-wide">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-[#00d4ff]/20 text-[#00d4ff]">
+              <MapPinned className="h-4 w-4" />
             </span>
+            <span className="text-[#e2e8f0] hidden sm:inline">ROAD</span>
+            <span className="text-[#00d4ff] hidden sm:inline">PULSE</span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <Link key={link.path} to={link.path}>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                    location.pathname === link.path
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  {link.label}
-                </motion.div>
-              </Link>
-            ))}
+          <div className="max-w-full overflow-x-auto">
+            <Tabs value={activePath}>
+              <TabsList className="h-9 border border-[#0f1e30] bg-[#060b14]">
+                {navLinks.map((link) => (
+                  <TabsTrigger
+                    key={link.path}
+                    value={link.path}
+                    onClick={() => navigate(link.path)}
+                    className="whitespace-nowrap px-2 text-[10px] md:px-3 md:text-[11px] data-[state=active]:bg-[#00d4ff]/10 data-[state=active]:text-[#00d4ff]"
+                  >
+                    {link.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
           </div>
 
-          {/* Theme Toggle & Mobile Menu */}
-          <div className="flex items-center gap-2">
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={toggleTheme}
-              className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
-              aria-label="Toggle theme"
+          <div className="flex justify-end">
+            <Badge
+              className="h-7 rounded-full border border-[#1a3f57] bg-[#091526] px-3 text-[10px] font-medium text-slate-300"
             >
-              <motion.div
-                initial={false}
-                animate={{ rotate: theme === "dark" ? 180 : 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                {theme === "dark" ? (
-                  <Sun className="w-5 h-5 text-amber-400" />
-                ) : (
-                  <Moon className="w-5 h-5 text-primary" />
-                )}
-              </motion.div>
-            </motion.button>
-
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </Button>
+              <span className="mr-2 inline-flex h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+              SYSTEM ONLINE · v2.1
+            </Badge>
           </div>
         </div>
-
-        {/* Mobile Navigation */}
-        <motion.div
-          initial={false}
-          animate={{ height: mobileMenuOpen ? "auto" : 0, opacity: mobileMenuOpen ? 1 : 0 }}
-          transition={{ duration: 0.2 }}
-          className="md:hidden overflow-hidden"
-        >
-          <div className="py-4 space-y-2">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <motion.div
-                  whileTap={{ scale: 0.98 }}
-                  className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                    location.pathname === link.path
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-secondary"
-                  }`}
-                >
-                  {link.label}
-                </motion.div>
-              </Link>
-            ))}
-          </div>
-        </motion.div>
       </div>
     </motion.nav>
   );

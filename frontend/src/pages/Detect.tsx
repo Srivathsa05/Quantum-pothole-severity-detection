@@ -1,189 +1,165 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useMemo, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { UploadCloud } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Upload, Camera, Video } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { FileUpload } from "@/components/detection/FileUpload";
-import { FilePreview } from "@/components/detection/FilePreview";
-import { CameraCapture } from "@/components/detection/CameraCapture";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+const sampleFeed = [
+  { severity: "CRITICAL", location: "MG Road", confidence: 0.97, time: "14:22:10" },
+  { severity: "HIGH", location: "Koramangala 5th Block", confidence: 0.91, time: "14:21:44" },
+  { severity: "MEDIUM", location: "BTM Layout", confidence: 0.83, time: "14:21:18" },
+  { severity: "CRITICAL", location: "Hebbal Flyover", confidence: 0.95, time: "14:20:59" },
+  { severity: "HIGH", location: "Indiranagar 100ft Road", confidence: 0.9, time: "14:20:20" },
+  { severity: "MEDIUM", location: "HSR Layout Sector 2", confidence: 0.79, time: "14:19:53" },
+];
+
+function severityClasses(severity: string) {
+  if (severity === "CRITICAL") return "border-red-400/40 bg-red-500/10 text-red-300";
+  if (severity === "HIGH") return "border-amber-400/40 bg-amber-500/10 text-amber-300";
+  return "border-emerald-400/40 bg-emerald-500/10 text-emerald-300";
+}
 
 export default function Detect() {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [activeTab, setActiveTab] = useState<"upload" | "camera">("upload");
   const navigate = useNavigate();
 
-  const handleFileSelect = (selectedFile: File, previewUrl: string) => {
-    setFile(selectedFile);
-    setPreview(previewUrl);
+  const feed = useMemo(() => {
+    if (!file) return sampleFeed;
+    return [
+      { severity: "HIGH", location: "Uploaded Segment", confidence: 0.92, time: new Date().toLocaleTimeString() },
+      ...sampleFeed,
+    ];
+  }, [file]);
+
+  const onFileChange = (selected: File) => {
+    setFile(selected);
+    setPreview(URL.createObjectURL(selected));
   };
 
-  const handleCapture = (capturedFile: File, previewUrl: string) => {
-    setFile(capturedFile);
-    setPreview(previewUrl);
-  };
-
-  const clearFile = () => {
-    setFile(null);
-    setPreview(null);
-  };
-
-  const handleAnalyze = async () => {
+  const onAnalyze = async () => {
     if (!file) return;
     setIsAnalyzing(true);
-
     try {
       const form = new FormData();
       form.append("file", file, file.name);
-
-      const res = await fetch("http://localhost:8000/predict", {
-        method: "POST",
-        body: form,
-      });
-
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || "Prediction failed");
+      const response = await fetch("http://localhost:8000/predict", { method: "POST", body: form });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Prediction failed");
       }
-
-      const data = await res.json();
-
-      // Navigate to results and pass prediction + preview via state
+      const data = await response.json();
       navigate("/results", { state: { prediction: data, preview } });
-    } catch (err) {
-      console.error("Analyze error:", err);
-      navigate("/results", { state: { error: String(err) } });
+    } catch (error) {
+      navigate("/results", { state: { error: String(error) } });
     } finally {
       setIsAnalyzing(false);
     }
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] py-12">
-      <div className="section-container">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-3xl mx-auto"
-        >
-          {/* Header */}
-          <div className="text-center mb-12">
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-3xl sm:text-4xl font-bold mb-4"
-            >
-              Road Surface <span className="quantum-text">Analysis</span>
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-muted-foreground"
-            >
-              Upload an image, capture a photo, or record video for
-              quantum-enhanced pothole detection and severity classification.
-            </motion.p>
+    <div className="section-container py-4">
+      <Card className="border-[#0f1e30] bg-[#08101f]">
+        <CardHeader>
+          <p className="section-label">Detection</p>
+          <CardTitle className="text-base text-slate-100">File-Based Severity Scanner</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="relative h-[180px] overflow-hidden rounded-lg border border-[#14304a] bg-[#050b14]">
+            <div className="scanline" />
+            {preview ? (
+              <>
+                <img src={preview} alt="Preview" className="h-full w-full object-cover opacity-85" />
+                <div className="absolute left-[12%] top-[25%] h-12 w-20 animate-pulse rounded border-[1.5px] border-dashed border-red-400" />
+                <div className="absolute left-[44%] top-[48%] h-11 w-16 animate-pulse rounded border-[1.5px] border-dashed border-amber-400" />
+                <div className="absolute left-[12%] top-[20%] rounded bg-red-500/80 px-1 py-0.5 text-[10px] text-white">critical</div>
+                <div className="absolute left-[44%] top-[43%] rounded bg-amber-500/80 px-1 py-0.5 text-[10px] text-slate-950">high</div>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                className="flex h-full w-full flex-col items-center justify-center gap-2 border-2 border-dashed border-[#1b4360] text-slate-300"
+              >
+                <UploadCloud className="h-8 w-8 text-[#00d4ff]" />
+                <p className="text-sm">Drop image/video or click to upload</p>
+              </button>
+            )}
+            <input
+              ref={inputRef}
+              type="file"
+              className="hidden"
+              accept="image/*,video/*"
+              onChange={(event) => {
+                const selected = event.target.files?.[0];
+                if (selected) onFileChange(selected);
+              }}
+            />
           </div>
 
-          {/* Input Area */}
-          <AnimatePresence mode="wait">
-            {!file ? (
-              <motion.div
-                key="input-selector"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-              >
-                {/* Tabs for Upload vs Camera */}
-                <Tabs
-                  value={activeTab}
-                  onValueChange={(v) => setActiveTab(v as "upload" | "camera")}
-                  className="w-full"
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={onAnalyze}
+              disabled={!file || isAnalyzing}
+              className="bg-[#00d4ff] text-[#03111b] hover:bg-[#40e2ff]"
+            >
+              {isAnalyzing ? "Analyzing..." : "Run Detection"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setFile(null);
+                setPreview(null);
+              }}
+              className="border-[#1d3c56] bg-transparent"
+            >
+              Clear
+            </Button>
+          </div>
+
+          <Card className="border-[#0f1e30] bg-[#060d18]">
+            <CardHeader className="pb-3">
+              <p className="section-label">Detection Feed</p>
+              <CardTitle className="text-sm text-slate-100">Recent Inferences</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-56 pr-3">
+                <motion.div
+                  initial="hidden"
+                  animate="show"
+                  variants={{
+                    hidden: {},
+                    show: { transition: { staggerChildren: 0.08 } },
+                  }}
+                  className="space-y-2"
                 >
-                  <TabsList className="grid w-full grid-cols-2 mb-6">
-                    <TabsTrigger
-                      value="upload"
-                      className="flex items-center gap-2"
+                  {feed.map((entry, index) => (
+                    <motion.div
+                      key={`${entry.location}-${index}`}
+                      variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+                      className="flex items-center justify-between rounded-md border border-[#12263a] bg-[#091321] px-3 py-2 text-xs"
                     >
-                      <Upload className="w-4 h-4" />
-                      Upload File
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="camera"
-                      className="flex items-center gap-2"
-                    >
-                      <Camera className="w-4 h-4" />
-                      Camera
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="upload">
-                    <FileUpload onFileSelect={handleFileSelect} />
-                  </TabsContent>
-
-                  <TabsContent value="camera">
-                    <CameraCapture
-                      onCapture={handleCapture}
-                      onCancel={() => setActiveTab("upload")}
-                    />
-                  </TabsContent>
-                </Tabs>
-              </motion.div>
-            ) : (
-              <FilePreview
-                key="preview"
-                file={file}
-                preview={preview!}
-                isAnalyzing={isAnalyzing}
-                onClear={clearFile}
-                onAnalyze={handleAnalyze}
-              />
-            )}
-          </AnimatePresence>
-
-          {/* Instructions */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="mt-12 glass-card rounded-2xl p-6"
-          >
-            <h3 className="font-semibold mb-4">
-              Best Practices for Accurate Results
-            </h3>
-            <ul className="space-y-3 text-sm text-muted-foreground">
-              <li className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
-                <span>
-                  Capture images in good lighting conditions for optimal
-                  analysis
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
-                <span>
-                  Ensure the road surface is clearly visible and in focus
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
-                <span>
-                  For video, slowly pan across the damaged area from multiple
-                  angles
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
-                <span>
-                  Use the rear camera for best quality when capturing on mobile
-                </span>
-              </li>
-            </ul>
-          </motion.div>
-        </motion.div>
-      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge className={`border ${severityClasses(entry.severity)}`}>{entry.severity}</Badge>
+                        <span className="text-slate-200">{entry.location}</span>
+                      </div>
+                      <div className="text-right text-slate-400">
+                        <div>{Math.round(entry.confidence * 100)}%</div>
+                        <div>{entry.time}</div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </CardContent>
+      </Card>
     </div>
   );
 }

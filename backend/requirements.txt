@@ -1,6 +1,11 @@
 fastapi
 uvicorn
 python-multipart
+websockets
+sqlalchemy
+psycopg[binary]
+pyyaml
+prometheus-client
 
 torch
 torchvision

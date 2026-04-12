@@ -11,6 +11,10 @@ import Results from "./pages/Results";
 import Model from "./pages/Model";
 import NotFound from "./pages/NotFound";
 import Contributions from "./pages/Contributions";
+import Live from "./pages/Live";
+import HeatMap from "./pages/HeatMap";
+import Export from "./pages/Export";
+import Dashboard from "./pages/Dashboard";
 
 
 const queryClient = new QueryClient();
@@ -29,6 +33,10 @@ const App = () => (
               <Route path="/results" element={<Results />} />
               <Route path="/model" element={<Model />} />
               <Route path="/contributions" element={<Contributions />} />
+              <Route path="/live" element={<Live />} />
+              <Route path="/heatmap" element={<HeatMap />} />
+              <Route path="/export" element={<Export />} />
+              <Route path="/dashboard" element={<Dashboard />} />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

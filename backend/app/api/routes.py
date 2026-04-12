@@ -3,9 +3,15 @@ import uuid
 from fastapi import APIRouter, UploadFile, File, HTTPException
 
 from app.api.schemas import PredictionResponse
+from app.api import data_routes, gamify_routes, ws_routes
 from ml.inference.predictor import predict_image
 
 router = APIRouter()
+
+# Mount feature/data/gamification routes so main app picks them up once.
+router.include_router(data_routes.router, tags=["data"])
+router.include_router(gamify_routes.router, tags=["gamify"])
+router.include_router(ws_routes.router, tags=["stream"])
 
 TEMP_DIR = "backend/temp_uploads"
 os.makedirs(TEMP_DIR, exist_ok=True)
