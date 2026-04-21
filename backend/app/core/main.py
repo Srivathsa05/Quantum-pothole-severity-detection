@@ -1,14 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.app.api.routes import router as api_router
+from app.api.routes import router as api_router
+from app.api.analytics_routes import router as analytics_router
 
 app = FastAPI(
     title="Quantum Pothole Severity Detection API",
-    description="Real-time pothole severity prediction using a hybrid CNN–QNN model",
+    description="Real-time pothole severity prediction using a hybrid CNN-QNN model",
     version="1.0.0"
 )
 
 app.include_router(api_router)
+app.include_router(analytics_router, prefix="/api/analytics", tags=["analytics"])
 
 # Allow requests from local frontends (Vite dev + preview + prod)
 app.add_middleware(

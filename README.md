@@ -1,12 +1,13 @@
 # Quantum Pothole Severity Detection
 
-A real-time quantum-enhanced pothole severity detection system with live video streaming, heatmap visualization, CSV export, and gamification features.
+A real-time quantum-enhanced pothole severity detection system with live video streaming, heatmap visualization, analytics dashboard, CSV export, and gamification features.
 
 ## Features
 
 - **Image Upload Detection**: Upload photos for instant pothole severity analysis
 - **Live Video Streaming**: Real-time analysis from webcam or dashcam via WebSocket
-- **Heatmap Visualization**: Interactive Leaflet map showing aggregated pothole data
+- **Heatmap Visualization**: Interactive Leaflet map showing aggregated pothole data with live detection updates
+- **Analytics Dashboard**: Historical trends, predictive maintenance, real-time analytics, and municipal road integration
 - **CSV Export**: Download detection logs within date ranges
 - **Gamification**: Points, badges, leaderboard, and missions (configurable via features.yaml)
 - **Mobile Client**: HTML/JS page for smartphone streaming with GPS
@@ -14,9 +15,9 @@ A real-time quantum-enhanced pothole severity detection system with live video s
 
 ## Architecture
 
-- **Backend**: FastAPI with WebSocket support, SQLAlchemy (SQLite), quantum CNN-QNN ML model
-- **Frontend**: React with TypeScript, Vite, Tailwind CSS, React-Leaflet, Ant Design
-- **Database**: SQLite (local file-based, no setup required)
+- **Backend**: FastAPI with WebSocket support, SQLAlchemy (PostgreSQL), quantum CNN-QNN ML model
+- **Frontend**: React with TypeScript, Vite, Tailwind CSS, React-Leaflet, Recharts
+- **Database**: PostgreSQL for production analytics and detection storage
 - **ML Model**: Hybrid CNN-QNN using PennyLane and PyTorch
 
 ## Prerequisites
@@ -66,8 +67,8 @@ A real-time quantum-enhanced pothole severity detection system with live video s
 Create `backend/.env` with:
 
 ```env
-# Database (uses SQLite by default, no setup needed)
-DATABASE_URL=sqlite:///./pothole.db
+# Database (PostgreSQL required for analytics)
+DATABASE_URL=postgresql+psycopg://postgres:your_password@localhost:5432/pothole_detection
 
 # Features toggle
 FEATURES_FILE=../features.yaml
@@ -77,6 +78,12 @@ ENABLE_DASHCAM=false
 BACKEND_WS=ws://localhost:8000/ws/frame
 DASHCAM_URL=rtsp://192.168.1.10:554/stream
 ```
+
+**PostgreSQL Setup:**
+1. Install PostgreSQL 14+ and pgAdmin4
+2. Create database: `pothole_detection`
+3. Run schema: `backend/database/schema.sql`
+4. Update `DATABASE_URL` with your credentials
 
 ### Frontend Environment (.env)
 
@@ -172,6 +179,7 @@ gamification: true  # Enable/disable gamification features
 - `GET /export?start=...&end=...`: CSV export
 - `GET /features`: Feature configuration
 - `/gamify/*`: Gamification endpoints (if enabled)
+- `/api/analytics/*`: Analytics endpoints (historical trends, predictive maintenance, real-time analytics, municipal roads)
 
 ## Troubleshooting
 

@@ -1,15 +1,11 @@
-import torch
+import torch.nn as nn
 from torchvision import models
-from ml.config import DEVICE
 
-def load_feature_extractor():
-    resnet = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
-    model = torch.nn.Sequential(*list(resnet.children())[:-1])
-    model.to(DEVICE)
-    model.eval()
-    return model
+class FeatureExtractor(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.model = models.resnet50(weights="IMAGENET1K_V1")
+        self.model.fc = nn.Identity()
 
-@torch.no_grad()
-def extract_features(model, x):
-    feats = model(x)
-    return feats.view(feats.size(0), -1)
+    def forward(self, x):
+        return self.model(x)

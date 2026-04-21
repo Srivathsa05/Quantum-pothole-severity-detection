@@ -1,45 +1,93 @@
 import torch
+
 import torch.nn as nn
+
 import pennylane as qml
-import os
-from ml.config import DEVICE, N_QUBITS, N_CLASSES
 
-def load_qnn_model():
-    dev = qml.device("default.qubit", wires=N_QUBITS)
 
-    @qml.qnode(dev, interface="torch")
-    def qnode(inputs, weights):
-        qml.AngleEmbedding(inputs, wires=range(N_QUBITS))
-        qml.StronglyEntanglingLayers(weights, wires=range(N_QUBITS))
-        return [qml.expval(qml.PauliZ(i)) for i in range(N_QUBITS)]
 
-    weight_shapes = {"weights": (2, N_QUBITS, 3)}
-    qlayer = qml.qnn.TorchLayer(qnode, weight_shapes)
+n_qubits = 4
 
-    class HybridQNN(nn.Module):
-        def __init__(self):
-            super().__init__()
-            self.qlayer = qlayer
-            self.fc = nn.Sequential(
-                nn.Linear(N_QUBITS, 32),
-                nn.ReLU(),
-                nn.Linear(32, N_CLASSES)
-            )
+dev = qml.device("default.qubit", wires=n_qubits)
 
-        def forward(self, x):
-            return self.fc(self.qlayer(x))
 
-    model = HybridQNN().to(DEVICE)
 
-    # Get absolute path to artifacts
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(os.path.dirname(current_dir))
-    model_path = os.path.join(project_root, "ml", "artifacts", "qnn_torchlayer.pth")
+@qml.qnode(dev, interface="torch")
 
-    ckpt = torch.load(
-        model_path,
-        map_location=DEVICE
-    )
-    model.load_state_dict(ckpt["state_dict"])
-    model.eval()
-    return model
+def circuit(inputs, weights):
+
+    qml.templates.AngleEmbedding(inputs, wires=range(n_qubits))
+
+    qml.templates.StronglyEntanglingLayers(weights, wires=range(n_qubits))
+
+    return [qml.expval(qml.PauliZ(i)) for i in range(n_qubits)]
+
+
+
+class QNN(nn.Module):
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.weights = nn.Parameter(0.01 * torch.randn(3, n_qubits, 3))
+
+
+
+    def forward(self, x):
+
+        outputs = []
+
+        for i in x:
+
+            out = circuit(i, self.weights)
+
+            out = torch.stack(out).float()
+
+            outputs.append(out)
+
+        return torch.stack(outputs)
+
+
+
+class HybridModel(nn.Module):
+
+    def __init__(self):
+
+        super().__init__()
+
+
+
+        from torchvision.models import resnet50, ResNet50_Weights
+
+
+
+        # Load pretrained ResNet50 and remove the final classification layer
+        self.cnn = resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
+        self.cnn.fc = nn.Identity()
+
+        self.fc1 = nn.Linear(2048, 64)
+
+        self.fc2 = nn.Linear(64, n_qubits)
+
+
+
+        self.qnn = QNN()
+
+        self.final = nn.Linear(n_qubits, 3)
+
+
+
+    def forward(self, x):
+
+        x = self.cnn(x)
+
+        x = torch.relu(self.fc1(x))
+
+        x = self.fc2(x)
+
+        x = self.qnn(x)
+
+        x = self.final(x)
+
+        return x

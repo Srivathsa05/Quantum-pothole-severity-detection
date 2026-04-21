@@ -15,6 +15,7 @@ import Live from "./pages/Live";
 import HeatMap from "./pages/HeatMap";
 import Export from "./pages/Export";
 import Dashboard from "./pages/Dashboard";
+import Analytics from "./pages/Analytics";
 
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="/heatmap" element={<HeatMap />} />
               <Route path="/export" element={<Export />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/analytics" element={<Analytics />} />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

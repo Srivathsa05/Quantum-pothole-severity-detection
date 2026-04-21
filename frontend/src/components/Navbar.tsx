@@ -10,6 +10,7 @@ const navLinks = [
   { path: "/detect", label: "Detection" },
   { path: "/live", label: "Live Detection" },
   { path: "/heatmap", label: "Heatmap" },
+  { path: "/analytics", label: "Analytics" },
   { path: "/results", label: "Results" },
   { path: "/model", label: "About Us" },
 ];

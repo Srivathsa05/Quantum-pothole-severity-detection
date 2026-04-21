@@ -10,5 +10,5 @@ torch.manual_seed(SEED)
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 CLASS_NAMES = ["no_pothole", "minor", "severe"]
-N_QUBITS = 6
+N_QUBITS = 4
 N_CLASSES = 3
